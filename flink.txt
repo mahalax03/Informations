@@ -70,3 +70,132 @@ Apache Flink is a **distributed, stateful stream processing framework** designed
 * Cloud-native environments
 
 **In summary**, Flink’s architecture enables scalable, fault-tolerant, and low-latency stream processing with strong state consistency, making it ideal for real-time analytics and event-driven applications.
+
+
+
+
+1. Stateless Stream Processing
+
+Stateless processing treats each event independently and does not store any information about previously processed events i.e No memory of past events
+and output depends only on the current input record
+It is Simple & fast to execute and easy to scale 
+
+Examples :  Data transformation (map, filter) , Format conversion (JSON → Avro) ,Simple validation or enrichment without history
+
+
+
+2.Stateful Stream Processing
+
+Stateful processing maintains state (memory) across events to produce correct results. 
+The output depends on current and past events.
+Flink state is kept local to the machine that processes it and can be accessed at memory speed .
+It is fault-tolerant and vertically & horizontally scalable.
+State can be per key (keyed state) or global (operator state) and it Enables complex computations
+
+
+Examples : Window-based aggregations (sum, average) ,pattern detection, Session tracking and real-time event processing
+
+
+
+
+
+Fault Tolerance in Apache Flink
+
+Apache Flink provides strong fault tolerance to ensure exactly-once state consistency, even in the presence of failures such as task crashes, network issues, or machine failures.
+Flink achieves this by periodically taking consistent snapshots (checkpoints) of the application state that is stored Heap memory, or RocksDB state backend. If a failure occurs, Flink restores the job from the latest successful checkpoint and Source connectors reset their offsets (e.g., Kafka offsets).
+Flink uses a variant of the Chandy–Lamport distributed snapshot algorithm.
+
+
+
+
+Flink In-Memory Processing 
+
+Stream-first execution processes events record-by-record without materializing intermediate results to disk.
+
+Pipelined data flow allows operators to exchange data through in-memory network buffers.
+
+In-memory state storage keeps frequently accessed state in RAM for fast processing.
+
+Managed memory reduces garbage collection and optimizes memory usage across operators.
+
+Efficient serialization and zero-copy techniques minimize memory overhead and data movement.
+
+Asynchronous checkpointing ensures fault tolerance without blocking in-memory processing.
+
+
+
+
+
+Use cases:
+
+Alibaba
+Uses Apache Flink for real-time stream processing on its e-commerce platforms to handle billions of events per day, including live analytics, fraud detection, and personalized recommendations.
+Netflix
+Uses Flink to process real-time event streams for monitoring user behavior, detecting anomalies in streaming quality, and powering near-real-time analytics.
+
+
+
+
+API provided by Flink 
+
+Connects to systems like Kafka, filesystems, JDBC, and custom sources
+Supported in Java, Python,Scala
+
+
+DataStream API 
+
+The DataStream API is powerful, flexible, and forms the foundation of Apache Flink’s real-time stream processing capabilities.
+It works majorly on unbounded data streams and supports time semantics
+It Enables stateful processing with keyed & operator state and also guarantees exactly-once semantics with checkpointing
+Streams are transformed using operators such as:map, filter, flatMap,keyBy,window,process,etc.
+
+
+
+Table API 
+
+The Table API is a high-level, declarative API in Apache Flink used to process structured and semi-structured data in both streaming and batch modes. It provides a SQL-like, relational abstraction on top of Flink’s runtime.
+Operates on tables instead of low-level streams and supports event-time processing & windowing
+Data is represented as dynamic tables  and Automatically handles query optimization & execution planning 
+Common operations include:select, where, groupBy, join and Windowed aggregations
+
+
+
+FLINK AND KAFKA
+
+
+Apache Kafka and Flink complement each other perfectly in real-time data architectures. Together, they form a robust, scalable, and fault-tolerant streaming ecosystem widely used in production systems.
+
+Kafka acts as a durable, distributed event log:
+   Stores streams reliably
+   Handles ingestion at massive scale
+
+Flink acts as a real-time stream processor:
+
+  Consumes events
+  Applies transformations, aggregations, and business logic
+  consistent state via checkpointing
+
+
+This makes the best use of the Kappa architecture since kafka treats all data as streams and flink processes both real-time and historical data as streams. Now reprocessing is as simple as replaying Kafka topics and this eliminates the need for separate batch pipelines
+
+Parallelism aligns naturally: Kafka partitions ↔ Flink task parallelism
+
+Flink checkpoints persist Kafka offsets together with application state, enabling recovery that resumes consumption without data loss or duplication, while two-phase commit sinks ensure end-to-end exactly-once guarantees.
+
+
+
+APPLICATION 
+
+Multiple banking sources (ATM, mobile apps, net banking, UPI, card swipes) generate transaction events and are published to Kafka topics
+Apache Flink consumes transaction events from Kafka using a Kafka Source connector.
+Transactions are deserialized and converted into Flink DataStreams.
+Flink uses event-time processing to handle out-of-order transactions.
+The stream is keyed by account ID  using keyBy.
+Flink maintains keyed state (e.g., recent transaction count, location history, velocity checks).
+Fraud detection logic is applied using the statefull stream processing and sliding window or AI/ML models
+When a transaction matches fraud conditions, Flink generates a fraud alert event to a Kafka topic (e.g., fraud-alerts) for downstream systems and also logs then in DB sink.
+
+Transaction data from multiple banking channels is ingested into Kafka, which acts as a durable and replayable event log. Apache Flink consumes this data in real time, applies stateful fraud detection using event-time processing or AI/ML model , and generates alerts for suspicious transactions. Fraud alerts are published to Kafka and logged into a database for auditing.
+
+
+
