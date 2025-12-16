@@ -1,0 +1,72 @@
+### Apache Flink Architecture
+
+Apache Flink is a **distributed, stateful stream processing framework** designed for high-throughput and low-latency data processing. It supports **true streaming** as well as **batch processing as a special case of streaming**.
+
+#### 1. Core Components
+
+* **Client**
+  Submits Flink jobs (JARs) to the cluster and triggers execution.
+
+* **JobManager (Master Node)**
+
+  * Coordinates job execution
+  * Schedules tasks and manages checkpoints
+  * Handles failure recovery and resource allocation
+
+* **TaskManagers (Worker Nodes)**
+
+  * Execute tasks (operators) in parallel
+  * Manage task slots (units of parallelism)
+  * Maintain local state during processing
+
+#### 2. Execution Model
+
+* A Flink program is converted into a **logical dataflow graph**
+* The graph is optimized and transformed into a **physical execution graph**
+* Operators run in parallel across TaskManagers
+* Data flows continuously between operators via network channels
+
+#### 3. State Management
+
+* Flink supports **stateful stream processing**
+* State is stored either:
+
+  * **In-memory**, or
+  * **RocksDB (embedded key-value store)**
+* State is **partitioned by key** and distributed across TaskManagers
+
+#### 4. Fault Tolerance
+
+* Uses **checkpointing** based on the **Chandy–Lamport algorithm**
+* Periodic snapshots of state are stored in durable storage (HDFS/S3)
+* On failure, Flink restores state and resumes processing **exactly once**
+
+#### 5. Time & Windowing
+
+* Supports:
+
+  * **Event Time**
+  * **Processing Time**
+  * **Ingestion Time**
+* Advanced **windowing mechanisms** (tumbling, sliding, session windows)
+* Handles **out-of-order events** using watermarks
+
+#### 6. APIs & Layers
+
+* **DataStream API** – for stream processing
+* **Table & SQL API** – declarative, relational processing
+* **CEP API** – complex event pattern detection
+
+#### 7. Connectors & Integrations
+
+* Built-in connectors for **Kafka, HDFS, JDBC, Cassandra**, etc.
+* Works well in **Kappa architecture** setups
+
+#### 8. Deployment Modes
+
+* Standalone
+* YARN
+* Kubernetes
+* Cloud-native environments
+
+**In summary**, Flink’s architecture enables scalable, fault-tolerant, and low-latency stream processing with strong state consistency, making it ideal for real-time analytics and event-driven applications.
