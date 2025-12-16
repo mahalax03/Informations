@@ -1,0 +1,117 @@
+Evaluation of Apache Flink Adoption
+
+
+This evaluates Flink against the application’s functional requirements, processing model, data characteristics, scalability needs, and operational constraints, and determines whether Flink’s core strengths align with the problem being solved.
+
+The intent is to ensure that architectural decisions are need-driven rather than technology-driven, and that system complexity remains proportional to business value.
+
+1. Streaming vs Batch Processing
+
+Apache Flink is architected around a stream-first execution model, where data is continuously processed using pipelined operators. Batch processing in Flink is implemented internally as a special case of streaming.
+
+In the current system:
+
+Kafka consumers poll records in finite batches.
+
+Each batch is processed as an independent unit.
+
+There is no continuous event flow or long-running stream semantics.
+
+As a result:
+
+Flink’s pipelined execution and low-latency streaming model are not utilized.
+
+Flink effectively behaves as a batch executor with additional runtime overhead.
+
+
+
+2. Stateless Processing Nature
+
+The application processes each transaction independently, without maintaining historical context or correlating events over time.
+
+Specifically:
+
+No per-key state (e.g., account-level history) is required.
+
+No time-based windows or timers are used.
+
+No event-time or watermark handling is necessary.
+
+As a result:
+Flink’s state management features—such as keyed state, operator state, and checkpoint coordination—are therefore unused.
+
+
+
+3. Kafka Usage Pattern
+
+Kafka is primarily used as a message queue rather than a full-fledged event streaming platform.
+
+The system does not rely on:
+
+Stream replay for reprocessing logic changes
+
+Event-time ordering or late event handling
+
+Multiple downstream consumers with independent offsets
+
+Result : 
+Kafka’s role is limited to buffering and reliable delivery.
+
+
+
+4. Processing Logic Complexity
+
+The core processing logic consists of:
+
+Data conversion from AFS to LIQ
+
+Rule evaluation based on predefined conditions
+
+The system does not perform:
+
+Aggregations (GROUP BY, COUNT, SUM)
+
+Joins across streams or datasets
+
+Pattern recognition or CEP
+
+Analytical computations
+
+Result: Flink’s advanced APIs for analytics, windowing, and complex event processing remain unused, making its inclusion unjustified.
+
+5. Database Interaction Model
+
+Database access in the system is straightforward and well-optimized:
+
+Rule lookups are simple transactional reads and writes
+
+Queries are supported by appropriate indexing
+
+No complex joins, aggregations, or query optimization challenges exist
+
+
+Result : JPA/JDBC efficiently handles these operations with minimal overhead.
+
+
+
+6. In-Memory Processing Strategy
+
+The application employs an in-JVM in-memory strategy:
+
+Rule sets are loaded once per batch and reused across threads
+
+Java functional constructs (filter, map, reduce) are used for processing
+
+Shared memory significantly reduces repeated database calls
+
+
+Result: Local in-memory processing is the fastest and simplest approach for the given workload.
+
+
+
+
+
+ Conclusion
+
+After detailed evaluation, Apache Flink does not align with the current system’s requirements or processing model. The application does not benefit from streaming semantics, stateful computation, event-time handling, or large-scale analytics.
+ Adopting Flink would result in an over-engineered solution, increasing complexity without delivering proportional value—effectively using a sledgehammer to crack a nut.
